@@ -19,54 +19,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Cache cross compiler
-      id: cache-cross-compiler
-      uses: actions/cache@v4
-      with:
-        path: ~/opt/cross
-        key: cross-compiler-i686-elf-${{ runner.os }}-binutils-2.40-gcc-13.2.0
-
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential bison flex libgmp3-dev \
-          libmpc-dev libmpfr-dev texinfo nasm qemu-system-x86 xorriso
+        sudo apt-get install -y build-essential nasm qemu-system-x86 xorriso
 
-    - name: Build i686-elf cross compiler
-      if: steps.cache-cross-compiler.outputs.cache-hit != 'true'
+    - name: Download prebuilt i686-elf cross compiler
       run: |
-        export PREFIX="$HOME/opt/cross"
-        export TARGET=i686-elf
-        export PATH="$PREFIX/bin:$PATH"
-        
-        mkdir -p $PREFIX
-        mkdir -p /tmp/cross-build
-        cd /tmp/cross-build
-        
-        # Download binutils
-        wget -q https://ftp.gnu.org/gnu/binutils/binutils-2.40.tar.xz
-        tar -xf binutils-2.40.tar.xz
-        
-        # Build binutils
-        mkdir build-binutils && cd build-binutils
-        ../binutils-2.40/configure --target=$TARGET --prefix="$PREFIX" \
-          --with-sysroot --disable-nls --disable-werror
-        make -j$(nproc)
-        make install
-        cd ..
-        
-        # Download GCC
-        wget -q https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz
-        tar -xf gcc-13.2.0.tar.xz
-        
-        # Build GCC
-        mkdir build-gcc && cd build-gcc
-        ../gcc-13.2.0/configure --target=$TARGET --prefix="$PREFIX" \
-          --disable-nls --enable-languages=c,c++ --without-headers
-        make -j$(nproc) all-gcc
-        make -j$(nproc) all-target-libgcc
-        make install-gcc
-        make install-target-libgcc
+        wget -q https://github.com/lordmilko/i686-elf-tools/releases/download/13.2.0/i686-elf-tools-linux.zip
+        unzip -q i686-elf-tools-linux.zip -d ~/opt/cross
+        chmod +x ~/opt/cross/bin/*
+
+    - name: Verify toolchain
+      run: |
+        export PATH="$HOME/opt/cross/bin:$PATH"
+        i686-elf-gcc --version
+        i686-elf-ld --version
 
     - name: Build Resurgam OS
       working-directory: Resurgam
