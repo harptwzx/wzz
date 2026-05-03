@@ -7,7 +7,7 @@
 CC = i686-elf-gcc
 LD = i686-elf-ld
 AS = nasm
-CFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti          -nostdlib -nostartfiles -nodefaultlibs -I./kernel -I./include
+CFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -nostdlib -nostartfiles -nodefaultlibs -I./kernel -I./include
 LDFLAGS = -m elf_i386 -T linker.ld
 ASFLAGS = -f elf32
 
@@ -20,11 +20,11 @@ ISO_DIR = isodir
 # Source files
 BOOT_SRCS = $(BOOT_DIR)/boot.asm $(BOOT_DIR)/stage2.asm
 KERNEL_ASM = $(KERNEL_DIR)/kernel.asm
-KERNEL_CSRCS = $(KERNEL_DIR)/kernel.c                $(KERNEL_DIR)/vga.c                $(KERNEL_DIR)/console.c                $(KERNEL_DIR)/keyboard.c                $(KERNEL_DIR)/mouse.c                $(KERNEL_DIR)/idt.c                $(KERNEL_DIR)/gdt.c                $(KERNEL_DIR)/timer.c                $(KERNEL_DIR)/paging.c                $(KERNEL_DIR)/task.c                $(KERNEL_DIR)/vfs.c                $(KERNEL_DIR)/shell.c                $(KERNEL_DIR)/window.c                $(KERNEL_DIR)/desktop.c
+KERNEL_CSRCS = $(KERNEL_DIR)/kernel.c $(KERNEL_DIR)/vga.c $(KERNEL_DIR)/console.c $(KERNEL_DIR)/keyboard.c $(KERNEL_DIR)/mouse.c $(KERNEL_DIR)/idt.c $(KERNEL_DIR)/gdt.c $(KERNEL_DIR)/timer.c $(KERNEL_DIR)/paging.c $(KERNEL_DIR)/task.c $(KERNEL_DIR)/vfs.c $(KERNEL_DIR)/shell.c $(KERNEL_DIR)/window.c $(KERNEL_DIR)/desktop.c
 
 # Object files
 BOOT_OBJS = $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin
-KERNEL_OBJS = $(BUILD_DIR)/kernel_asm.o $(BUILD_DIR)/kernel.o               $(BUILD_DIR)/vga.o $(BUILD_DIR)/console.o               $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o               $(BUILD_DIR)/idt.o $(BUILD_DIR)/gdt.o               $(BUILD_DIR)/timer.o $(BUILD_DIR)/paging.o               $(BUILD_DIR)/task.o $(BUILD_DIR)/vfs.o               $(BUILD_DIR)/shell.o $(BUILD_DIR)/window.o               $(BUILD_DIR)/desktop.o
+KERNEL_OBJS = $(BUILD_DIR)/kernel_asm.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o $(BUILD_DIR)/console.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o $(BUILD_DIR)/idt.o $(BUILD_DIR)/gdt.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/paging.o $(BUILD_DIR)/task.o $(BUILD_DIR)/vfs.o $(BUILD_DIR)/shell.o $(BUILD_DIR)/window.o $(BUILD_DIR)/desktop.o
 
 # Targets
 all: $(BUILD_DIR)/resurgam.iso
@@ -107,8 +107,8 @@ $(BUILD_DIR)/resurgam.iso: $(BUILD_DIR)/resurgam.img
 	echo "set default=0" >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo "" >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo "menuentry \"Resurgam OS\" {" >> $(ISO_DIR)/boot/grub/grub.cfg
-	echo "    multiboot /boot/resurgam.img" >> $(ISO_DIR)/boot/grub/grub.cfg
-	echo "    boot" >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo "	multiboot /boot/resurgam.img" >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo "	boot" >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo "}" >> $(ISO_DIR)/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(ISO_DIR)
 
