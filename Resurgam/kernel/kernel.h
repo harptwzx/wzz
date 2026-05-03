@@ -8,45 +8,45 @@
 /* ============================================================================
  * Basic Types
  * ============================================================================ */
-typedef unsigned char   uint8_t;
-typedef unsigned short  uint16_t;
-typedef unsigned int    uint32_t;
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
-typedef signed char     int8_t;
-typedef signed short    int16_t;
-typedef signed int      int32_t;
+typedef signed char int8_t;
+typedef signed short int16_t;
+typedef signed int int32_t;
 typedef signed long long int64_t;
-typedef uint32_t        size_t;
-typedef uint32_t        uintptr_t;
-typedef uint8_t         bool;
-#define true  1
+typedef uint32_t size_t;
+typedef uint32_t uintptr_t;
+typedef uint8_t bool;
+#define true 1
 #define false 0
-#define NULL  ((void*)0)
+#define NULL ((void*)0)
 
 /* ============================================================================
  * Screen Constants
  * ============================================================================ */
-#define SCREEN_WIDTH    640
-#define SCREEN_HEIGHT   480
-#define SCREEN_BPP      32
-#define VGA_ADDR        0xFD000000
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
+#define SCREEN_BPP 32
+#define VGA_ADDR 0xFD000000
 
 /* ============================================================================
  * Colors (RGB)
  * ============================================================================ */
-#define COLOR_BLACK     0x000000
-#define COLOR_WHITE     0xFFFFFF
-#define COLOR_RED       0xFF4444
-#define COLOR_GREEN     0x44FF44
-#define COLOR_BLUE      0x4444FF
-#define COLOR_YELLOW    0xFFFF44
-#define COLOR_CYAN      0x44FFFF
-#define COLOR_MAGENTA   0xFF44FF
-#define COLOR_GRAY      0x888888
-#define COLOR_DARKGRAY  0x444444
-#define COLOR_ORANGE    0xFF8844
-#define COLOR_PURPLE    0x8844FF
-#define COLOR_TEAL      0x44FFAA
+#define COLOR_BLACK 0x000000
+#define COLOR_WHITE 0xFFFFFF
+#define COLOR_RED 0xFF4444
+#define COLOR_GREEN 0x44FF44
+#define COLOR_BLUE 0x4444FF
+#define COLOR_YELLOW 0xFFFF44
+#define COLOR_CYAN 0x44FFFF
+#define COLOR_MAGENTA 0xFF44FF
+#define COLOR_GRAY 0x888888
+#define COLOR_DARKGRAY 0x444444
+#define COLOR_ORANGE 0xFF8844
+#define COLOR_PURPLE 0x8844FF
+#define COLOR_TEAL 0x44FFAA
 
 /* ============================================================================
  * Inline Assembly Helpers
@@ -245,6 +245,8 @@ extern volatile uint32_t timer_frequency;
 /* Forward declarations for types used in headers */
 struct window;
 typedef struct window window_t;
+typedef struct mouse_state mouse_state_t;
+typedef struct desktop_icon desktop_icon_t;
 
 /* ============================================================================
  * Kernel Function Declarations
@@ -347,14 +349,11 @@ void draw_desktop(void);
 void draw_taskbar(void);
 void draw_clock(void);
 void draw_desktop_icons(void);
-void add_desktop_icon(const char* label, int x, int y, uint32_t color, void (*on_click)(struct desktop_icon*));
+void add_desktop_icon(const char* label, int x, int y, uint32_t color, void (*on_click)(desktop_icon_t*));
 void add_taskbar_button(window_t* w);
 void remove_taskbar_button(window_t* w);
 void update_taskbar(void);
 void handle_desktop_click(int x, int y, int button);
-void handle_mouse_move(int x, int y);
-void handle_mouse_click(int x, int y, int button);
-void handle_mouse_release(int x, int y, int button);
 void show_start_menu(void);
 
 /* VGA */
@@ -394,43 +393,33 @@ void console_goto(int x, int y);
 void console_scroll(void);
 void console_update_cursor(void);
 
-/* Desktop icon type */
-struct desktop_icon;
-
 /* Window constants */
-#define WINDOW_TITLE_H  24
-#define WINDOW_BORDER   2
+#define WINDOW_TITLE_H 24
+#define WINDOW_BORDER 2
 
 /* Window flags */
-#define WF_VISIBLE      0x01
-#define WF_ACTIVE       0x02
-#define WF_MINIMIZED    0x04
-#define WF_MAXIMIZED    0x08
-#define WF_RESIZABLE    0x10
-#define WF_MOVABLE      0x20
-#define WF_CLOSEABLE    0x40
-#define WF_HAS_SHADOW   0x80
+#define WF_VISIBLE 0x01
+#define WF_ACTIVE 0x02
+#define WF_MINIMIZED 0x04
+#define WF_MAXIMIZED 0x08
+#define WF_RESIZABLE 0x10
+#define WF_MOVABLE 0x20
+#define WF_CLOSEABLE 0x40
+#define WF_HAS_SHADOW 0x80
 
 /* Mouse button states */
-#define MOUSE_LEFT      0x01
-#define MOUSE_RIGHT     0x02
-#define MOUSE_MIDDLE    0x04
+#define MOUSE_LEFT 0x01
+#define MOUSE_RIGHT 0x02
+#define MOUSE_MIDDLE 0x04
 
 /* Mouse state (defined in mouse.c) */
-struct mouse_state {
-    int x;
-    int y;
-    int buttons;
-    int scroll;
-    int present;
-};
-extern struct mouse_state mouse;
+extern mouse_state_t mouse;
 extern volatile int mouse_packet_ready;
 extern int cursor_x, cursor_y;
 extern uint32_t cursor_color;
 
 /* Taskbar */
-#define TASKBAR_HEIGHT  28
+#define TASKBAR_HEIGHT 28
 
 /* Drag state (defined in window.c) */
 extern window_t* drag_window;
@@ -439,16 +428,16 @@ extern int drag_offset_y;
 extern int drag_mode;
 
 /* Hit test results */
-#define HT_CLIENT       0
-#define HT_TITLEBAR     1
-#define HT_CLOSE        2
-#define HT_MINIMIZE     3
-#define HT_MAXIMIZE     4
-#define HT_BORDER       5
-#define HT_NONE         6
+#define HT_CLIENT 0
+#define HT_TITLEBAR 1
+#define HT_CLOSE 2
+#define HT_MINIMIZE 3
+#define HT_MAXIMIZE 4
+#define HT_BORDER 5
+#define HT_NONE 6
 
 /* Framebuffer */
-extern uint32_t framebuffer[];
+extern uint32_t* framebuffer;
 extern int clip_x1, clip_y1, clip_x2, clip_y2;
 
 #endif
