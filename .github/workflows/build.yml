@@ -1,15 +1,20 @@
 name: Resurgam OS Build
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -65,15 +70,17 @@ jobs:
 
     - name: Build Resurgam OS
       working-directory: Resurgam
+      env:
+        BUILD_TYPE: ${{ github.event.inputs.build_type }}
       run: |
         export PATH="$HOME/opt/cross/bin:$PATH"
         make clean
-        make all
+        make all BUILD_TYPE=$BUILD_TYPE
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Resurgam-OS-Build
+        name: Resurgam-OS-Build-${{ github.event.inputs.build_type }}
         path: |
           build/boot.bin
           build/stage2.bin
