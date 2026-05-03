@@ -245,6 +245,13 @@ extern volatile uint32_t timer_frequency;
 /* Forward declarations for types used in headers */
 struct window;
 typedef struct window window_t;
+struct mouse_state {
+    int x;
+    int y;
+    int buttons;
+    int scroll;
+    int present;
+};
 typedef struct mouse_state mouse_state_t;
 typedef struct desktop_icon desktop_icon_t;
 
