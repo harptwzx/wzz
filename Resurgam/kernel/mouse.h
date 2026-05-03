@@ -7,25 +7,19 @@
 
 #include "kernel.h"
 
-#define MOUSE_DATA_PORT     0x60
-#define MOUSE_STATUS_PORT   0x64
-#define MOUSE_CMD_PORT      0x64
+#define MOUSE_DATA_PORT 0x60
+#define MOUSE_STATUS_PORT 0x64
+#define MOUSE_CMD_PORT 0x64
 
-/* Mouse packet structure */
-typedef struct {
-    int x;
-    int y;
-    int buttons;
-    int scroll;
-    int present;
-} mouse_state_t;
+/* Mouse state type (defined in kernel.h) */
+typedef struct mouse_state mouse_state_t;
 
 /* Button states */
-#define MOUSE_LEFT      0x01
-#define MOUSE_RIGHT     0x02
-#define MOUSE_MIDDLE    0x04
-#define MOUSE_BUTTON4   0x08
-#define MOUSE_BUTTON5   0x10
+#define MOUSE_LEFT 0x01
+#define MOUSE_RIGHT 0x02
+#define MOUSE_MIDDLE 0x04
+#define MOUSE_BUTTON4 0x08
+#define MOUSE_BUTTON5 0x10
 
 /* Mouse state */
 extern mouse_state_t mouse;
