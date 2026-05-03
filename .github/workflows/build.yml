@@ -1,11 +1,10 @@
-name: Build Resurgam OS
+name: Resurgam OS Build
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:
 
 jobs:
   build:
@@ -15,14 +14,21 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Cache cross compiler
+      id: cache-cross-compiler
+      uses: actions/cache@v4
+      with:
+        path: ~/opt/cross
+        key: cross-compiler-i686-elf-${{ runner.os }}-binutils-2.40-gcc-13.2.0
+
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential bison flex libgmp3-dev \
-          libmpc-dev libmpfr-dev texinfo nasm qemu-system-x86 xorriso \
-          grub-common wget
+          libmpc-dev libmpfr-dev texinfo nasm qemu-system-x86 xorriso
 
     - name: Build i686-elf cross compiler
+      if: steps.cache-cross-compiler.outputs.cache-hit != 'true'
       run: |
         export PREFIX="$HOME/opt/cross"
         export TARGET=i686-elf
@@ -32,12 +38,11 @@ jobs:
         mkdir -p /tmp/cross-build
         cd /tmp/cross-build
         
-        # Download sources
+        # Download binutils
         wget -q https://ftp.gnu.org/gnu/binutils/binutils-2.40.tar.xz
-        wget -q https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz
+        tar -xf binutils-2.40.tar.xz
         
         # Build binutils
-        tar -xf binutils-2.40.tar.xz
         mkdir build-binutils && cd build-binutils
         ../binutils-2.40/configure --target=$TARGET --prefix="$PREFIX" \
           --with-sysroot --disable-nls --disable-werror
@@ -45,8 +50,11 @@ jobs:
         make install
         cd ..
         
-        # Build GCC
+        # Download GCC
+        wget -q https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz
         tar -xf gcc-13.2.0.tar.xz
+        
+        # Build GCC
         mkdir build-gcc && cd build-gcc
         ../gcc-13.2.0/configure --target=$TARGET --prefix="$PREFIX" \
           --disable-nls --enable-languages=c,c++ --without-headers
@@ -54,17 +62,11 @@ jobs:
         make -j$(nproc) all-target-libgcc
         make install-gcc
         make install-target-libgcc
-        
-        echo "$PREFIX/bin" >> $GITHUB_PATH
-
-    - name: Verify toolchain
-      run: |
-        i686-elf-gcc --version
-        i686-elf-ld --version
-        nasm -v
 
     - name: Build Resurgam OS
+      working-directory: Resurgam
       run: |
+        export PATH="$HOME/opt/cross/bin:$PATH"
         make clean
         make all
 
@@ -77,26 +79,4 @@ jobs:
           build/stage2.bin
           build/kernel.bin
           build/resurgam.img
-          build/resurgam.iso
-
-    - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v1.0.${{ github.run_number }}
-        name: Resurgam OS v1.0.${{ github.run_number }}
-        body: |
-          Automated build of Resurgam OS
-          
-          ## Files
-          - `resurgam.img` - Floppy disk image
-          - `resurgam.iso` - Bootable ISO image
-          - `kernel.bin` - Raw kernel binary
-          
-          ## Usage
-          Run with QEMU:
-          ```bash
-          qemu-system-i386 -fda resurgam.img -m 32M
-          ```
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if-no-files-found: error
