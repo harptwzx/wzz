@@ -444,7 +444,7 @@ extern int drag_mode;
 #define HT_NONE 6
 
 /* Framebuffer */
-extern uint32_t* framebuffer;
+extern uint32_t framebuffer[];
 extern int clip_x1, clip_y1, clip_x2, clip_y2;
 
 #endif
