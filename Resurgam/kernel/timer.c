@@ -7,7 +7,7 @@
 
 volatile uint32_t timer_ticks = 0;
 volatile uint32_t timer_seconds = 0;
-static uint32_t timer_frequency = 0;
+volatile uint32_t timer_frequency = 0;
 
 /* ============================================================================
  * Initialize Timer
