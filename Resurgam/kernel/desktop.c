@@ -32,7 +32,7 @@ static void paint_settings(window_t* w);
 static void paint_calculator(window_t* w);
 static void paint_about(window_t* w);
 static void paint_start_menu(window_t* w);
-static void show_start_menu(void);
+void show_start_menu(void);
 
 /* ============================================================================
  * Initialize Desktop
