@@ -35,7 +35,7 @@ void reset_clip_rect(void);
 void render_frame(void);
 
 /* Framebuffer */
-extern uint32_t* framebuffer;
+extern uint32_t framebuffer[];
 extern int clip_x1, clip_y1, clip_x2, clip_y2;
 
 #endif
