@@ -15,6 +15,9 @@ static irq_handler_t irq_handlers[16] = {0};
 /* External ISR table from assembly */
 extern uint32_t isr_table[];
 
+/* External syscall entry from assembly */
+extern void syscall_entry(void);
+
 /* ============================================================================
  * Initialize IDT
  * ============================================================================ */
