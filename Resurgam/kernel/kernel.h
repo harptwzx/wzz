@@ -62,7 +62,7 @@ static inline void outb(uint16_t port, uint8_t data) {
 }
 
 static inline void io_wait(void) {
-    asm volatile("jmp 1f\n\t1: jmp 1f\n\t1:");
+    asm volatile("jmp 1f\\n\\t1: jmp 1f\\n\\t1:");
 }
 
 static inline uint32_t read_cr0(void) {
@@ -229,10 +229,11 @@ static inline int sqrt(int x) {
 }
 
 /* ============================================================================
- * kmalloc/kfree stubs (defined in window.c)
+ * kmalloc/kfree stubs (defined in window.c and paging.c)
  * ============================================================================ */
 extern uint32_t kmalloc(uint32_t sz);
 extern uint32_t kmalloc_a(uint32_t sz);
+extern uint32_t kmalloc_ap(uint32_t sz, uint32_t* phys);
 extern void kfree(void* ptr);
 
 /* ============================================================================
