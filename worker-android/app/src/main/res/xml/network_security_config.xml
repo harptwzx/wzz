@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Certificate Pinning for Coordinator -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">coordinator.local</domain>
+        <pin-set expiration="2025-12-31">
+            <!-- Pin for coordinator certificate (SHA-256) -->
+            <pin digest="SHA-256">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
+            <!-- Backup pin -->
+            <pin digest="SHA-256">sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="@raw/coordinator_cert"/>
+            <certificates src="system"/>
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">MDCS Worker</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_online">Online</string>
+    <string name="status_busy">Running Inference</string>
+    <string name="btn_connect">Join Cluster</string>
+    <string name="btn_disconnect">Leave Cluster</string>
+    <string name="label_device_info">Device Info</string>
+    <string name="label_cluster_status">Cluster Status</string>
+    <string name="label_tasks">Active Tasks</string>
+    <string name="notification_channel">MDCS Worker Service</string>
+    <string name="notification_title">Compute Node Active</string>
+    <string name="notification_text">Participating in distributed inference cluster</string>
+</resources>

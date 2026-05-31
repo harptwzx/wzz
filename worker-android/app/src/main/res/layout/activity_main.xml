@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/black">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="MDCS Worker Node"
+        android:textSize="24sp"
+        android:textColor="@android:color/holo_blue_light"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="16dp" />
+
+    <TextView
+        android:id="@+id/tvDeviceInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Loading device info..."
+        android:textSize="14sp"
+        android:textColor="@android:color/darker_gray"
+        android:fontFamily="monospace"
+        android:padding="12dp"
+        android:background="@android:color/background_dark"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status: DISCONNECTED"
+        android:textSize="18sp"
+        android:textColor="@android:color/holo_red_light"
+        android:textStyle="bold"
+        android:paddingBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tvTasks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No active tasks"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:paddingBottom="16dp" />
+
+    <EditText
+        android:id="@+id/etServerUrl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Coordinator WebSocket URL"
+        android:textColor="@android:color/white"
+        android:textColorHint="@android:color/darker_gray"
+        android:background="@android:color/background_dark"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnConnect"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/btn_connect"
+            android:backgroundTint="@android:color/holo_green_dark"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btnDisconnect"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/btn_disconnect"
+            android:backgroundTint="@android:color/holo_red_dark"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="
+Features:
+• WebSocket长连接 + 自动重连
+• 5秒心跳 + 延迟测试
+• INT8量化推理
+• NPU/GPU加速 (NNAPI)
+• 内存池防OOM
+• 低电量自动保护
+• 流水线/数据并行"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:paddingTop="16dp" />
+
+</LinearLayout>

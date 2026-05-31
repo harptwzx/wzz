@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  coordinator:
+    build: ./coordinator
+    container_name: mdcs-coordinator
+    ports:
+      - "8080:8080"
+      - "8765:8765"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - TLS_CERT=/app/certs/server.crt
+      - TLS_KEY=/app/certs/server.key
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./certs:/app/certs:ro
+      - ./models:/app/models:ro
+    depends_on:
+      - redis
+    networks:
+      - mdcs-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: mdcs-redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - mdcs-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mdcs-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - mdcs-network
+
+volumes:
+  redis_data:
+
+networks:
+  mdcs-network:
+    driver: bridge
