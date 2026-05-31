@@ -1,0 +1,280 @@
+name: MDCS Build & Test
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: '3.11'
+  JAVA_VERSION: '17'
+  ANDROID_API: '34'
+
+jobs:
+  # ============================================================
+  # Job 1: Coordinator - Lint, Test, Docker Build
+  # ============================================================
+  coordinator:
+    name: Coordinator (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./coordinator
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('coordinator/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio flake8 black mypy
+
+      - name: Lint with flake8
+        run: flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Format check with black
+        run: black --check src/ tests/
+
+      - name: Type check with mypy
+        run: mypy src/ --ignore-missing-imports
+
+      - name: Run unit tests
+        run: pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+        env:
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coordinator/coverage.xml
+          flags: coordinator
+          name: coordinator-coverage
+
+      - name: Build Docker image
+        run: |
+          docker build -t mdcs-coordinator:${{ github.sha }} .
+          docker tag mdcs-coordinator:${{ github.sha }} mdcs-coordinator:latest
+
+      - name: Save Docker image
+        run: docker save mdcs-coordinator:latest | gzip > mdcs-coordinator.tar.gz
+
+      - name: Upload Docker artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coordinator-docker
+          path: ./coordinator/mdcs-coordinator.tar.gz
+          retention-days: 7
+
+  # ============================================================
+  # Job 2: Worker Android - Build APK
+  # ============================================================
+  worker-android:
+    name: Worker Android (APK)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./worker-android
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('worker-android/**/*.gradle*', 'worker-android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
+        env:
+          SIGNING_KEY_STORE_PATH: ${{ secrets.SIGNING_KEY_STORE_PATH }}
+          SIGNING_KEY_STORE_PASSWORD: ${{ secrets.SIGNING_KEY_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+
+      - name: Run Android unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-debug
+          path: worker-android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Upload Release APK
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-release
+          path: worker-android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Upload build reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-reports
+          path: |
+            worker-android/app/build/reports/
+            worker-android/app/build/test-results/
+          retention-days: 7
+
+  # ============================================================
+  # Job 3: Integration Test (Coordinator + Simulated Workers)
+  # ============================================================
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [coordinator]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Coordinator dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r coordinator/requirements.txt
+          pip install pytest pytest-asyncio websockets
+
+      - name: Start Coordinator
+        run: |
+          cd coordinator
+          python -m src.main &
+          sleep 5
+          curl -f http://localhost:8080/health || exit 1
+
+      - name: Run integration tests
+        run: |
+          cd coordinator
+          pytest tests/test_integration.py -v
+
+      - name: Run benchmark suite
+        run: |
+          cd benchmarks
+          python test_suite.py || true
+
+      - name: Stop Coordinator
+        if: always()
+        run: pkill -f "python -m src.main" || true
+
+  # ============================================================
+  # Job 4: Release - Publish to GitHub Releases
+  # ============================================================
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [coordinator, worker-android, integration-test]
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/apk-release/*.apk
+            artifacts/coordinator-docker/*.tar.gz
+          body: |
+            ## MDCS Release ${{ github.ref_name }}
+
+            ### 包含内容
+            - **Worker APK**: Android工作节点安装包
+            - **Coordinator Docker**: 中心协调器Docker镜像
+
+            ### 快速开始
+            1. 部署Coordinator: `docker load < mdcs-coordinator.tar.gz`
+            2. 安装Worker APK到Android设备
+            3. 配置连接并加入集群
+
+            ### 完整文档
+            - [架构文档](docs/ARCHITECTURE.md)
+            - [API文档](docs/API.md)
+            - [用户手册](docs/USER_MANUAL.md)
+          draft: false
+          prerelease: false
+
+  # ============================================================
+  # Job 5: Code Quality - SonarQube / CodeQL
+  # ============================================================
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python, java
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
